@@ -1,0 +1,22 @@
+[package]
+name = "actix-cfwks-subconverter-toml"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+toml = { version = "0.8", features = ["preserve_order"] } # 保持 TOML 文件中键值对的原始顺序
+rand = "0.8.5"
+encoding = "0.2"
+serde_urlencoded = "0.7.1"
+serde_qs = "0.13.0"
+urlencoding = "2.1.3"
+lazy_static = "1.5.0"
+regex = "1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+actix-web = "4"
+local-ip-address = "0.6.1"
+qrcode = "0.14.1"
+image = "0.25.2"
+base64 = "0.13.1"

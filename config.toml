@@ -1,0 +1,37 @@
+[proxies]
+[[proxies.vless]]
+remarks_prefix = "VLESS+WS+TLS"
+uuid = "5be5de1d-8653-4ce3-a600-2ca1af75bdb5"
+host = "vless.pages.dev"
+server_name = "vless.pages.dev"
+path = "/?ed=2048"
+random_ports = [443, 2053, 2083, 2087, 2096, 8443] # [443]
+
+# vless+ws
+[[proxies.vless]]
+remarks_prefix = "VLESS+WS+TLS"
+uuid = "5be5de1d-8653-4ce3-a600-2ca1af75bdb5"
+host = "vless.abc.workers.dev"
+server_name = "vless.abc.workers.dev"
+path = "/?ed=2048"
+random_ports = [80, 8080, 8880, 2052, 2082, 2086, 2095]
+
+[[proxies.trojan]]
+remarks_prefix = "TROJAN+WS+TLS"
+password = "5be5de1d-8653-4ce3-a600-2ca1af75bdb5"
+host = "trojan.pages.dev"
+server_name = "trojan.pages.dev"
+path = "/"
+random_ports = [443, 2053, 2083, 2087, 2096, 8443]
+
+# trojan
+[[proxies.trojan]]
+remarks_prefix = "TROJAN+WS+TLS"
+password = "5be5de1d-8653-4ce3-a600-2ca1af75bdb5"
+host = "trojan2.pages.dev"
+server_name = "trojan2.pages.dev"
+path = "/"
+random_ports = [443, 2053, 2083, 2087, 2096, 8443]
+
+# 后面可以继续添加
+# 注意: 配置这里的信息时，推荐vless的配置在前面,trojan的配置在后面,后面使用可以根据userid=1来定位使用哪个配置
