@@ -273,14 +273,16 @@ async fn subconverter(req: HttpRequest) -> impl Responder {
                     max_node_count,
                 );
 
-            let format_json = utils::clash::match_template_output_clash_config(
+            let format_json: String = utils::clash::match_template_output_clash_config(
                 enable_template,
                 clash_template,
                 clash_outbounds_vecs,
                 page,
             );
+            // 调整yaml的缩进（数组）
+            let yaml_string: String = utils::indent::adjust_yaml_indentation(&format_json);
 
-            format_json.to_string()
+            yaml_string
         }
         _ => "".to_string(),
     };
