@@ -5,107 +5,13 @@ use local_ip_address::local_ip;
 use std::fs;
 use toml::Value;
 
+const SPECIFICATION: &str = include_str!("../使用说明.txt");
+
 #[get("/")]
 async fn index(req: HttpRequest) -> impl Responder {
     let host_address = req.connection_info().host().to_owned();
 
-    let html_doc = r#"【TOML版】本工具的功能：批量将优选的IP(不是WARP的优选IP)或域名，写入到 Cloudflare 搭建的 vless/trojan 协议的配置节点中，并转换为 v2ray、sing-box、clash.mate/mihomo 订阅!
-
-—————————————————————————————————————————————————————————————————————————————————————————————————
-
-web服务地址：http://{host_address}
-
-订阅地址格式：http://{host_address}/sub?target=[v2ray,singbox,clash]&page=[0,?)&template=[true,false]&nodesize=[1..?]&proxytype=[vless,trojan]&userid=[1..?)&tls=[true,false]&dport=[80..65535)
-
-—————————————————————————————————————————————————————————————————————————————————————————————————
-订阅示例：
-
-http://{host_address}/sub
-——————————————————————————————
-http://{host_address}/sub?target=singbox&template=false
-
-http://{host_address}/sub?target=singbox&template=false&userid=1
-http://{host_address}/sub?target=singbox&template=false&proxy=vless
-
-http://{host_address}/sub?target=clash&template=false
-——————————————————————————————
-http://{host_address}/sub?target=v2ray
-http://{host_address}/sub?target=singbox
-http://{host_address}/sub?target=clash
-——————————————————————————————
-http://{host_address}/sub?target=v2ray&page=2
-http://{host_address}/sub?target=singbox&page=2
-http://{host_address}/sub?target=clash&page=2
-——————————————————————————————
-http://{host_address}/sub?target=v2ray&userid=1
-http://{host_address}/sub?target=singbox&userid=1
-http://{host_address}/sub?target=clash&userid=1
-——————————————————————————————
-http://{host_address}/sub?target=v2ray&proxy=vless
-http://{host_address}/sub?target=v2ray&proxy=trojan
-
-http://{host_address}/sub?target=singbox&proxy=vless
-http://{host_address}/sub?target=singbox&proxy=trojan
-
-http://{host_address}/sub?target=clash&proxy=vless
-http://{host_address}/sub?target=clash&proxy=trojan
-——————————————————————————————
-http://{host_address}/sub?target=v2ray&tls=true
-http://{host_address}/sub?target=v2ray&tls=false
-
-http://{host_address}/sub?target=singbox&tls=true
-http://{host_address}/sub?target=singbox&tls=false
-
-http://{host_address}/sub?target=clash&tls=true
-http://{host_address}/sub?target=clash&tls=false
-——————————————————————————————
-http://{host_address}/sub?target=v2ray&nodesize=800
-http://{host_address}/sub?target=singbox&nodesize=300
-http://{host_address}/sub?target=clash&nodesize=300
-
-注意：
-    1、以上的参数均可随意组合，具体效果自己研究。
-    2、转换问题：
-        a.如果转换为v2ray的，支持vless+ws、vless+ws+tls、trojan+ws、vless+ws+tls。
-        b.如果转换为singbox的，支持vless+ws、vless+ws+tls、trojan+ws+tls。
-        c.如果转换为clash的，支持vless+ws、vless+ws+tls、trojan+ws+tls。
-       注意：原则上，以上的4种代理形式都能生成对应目标客户端的配置，只是无法联网使用。
-—————————————————————————————————————————————————————————————————————————————————————————————————
-订阅链接的参数介绍：
-
-    1、target：转换的目标客户端，默认是v2ray，可选v2ray、singbox、clash。
-
-    2、page：订阅的页码。
-    注意：分页是根据读取data目录下面的数据分页，不是根据生成的全部订阅分页；如果设置随机代理信息，代理信息随时变动，ip和反代域名固定不变。
-    
-    3、nodesize：您需要的节点数量，是从data目录下，读取txt、csv文件的所有数据中，截取前n个数据来构建节点信息。
-    注意： 
-        (1)如果符合要求的txt、csv文件比较多，读取到数据比较多，文件之间的数据拼接顺序跟文件名有一点关系；
-        (2)不是随机从data目录中读取到的全部数据中选择n个数据，而是按照读取到的数据先后顺序，截取前n个数据来构建节点的信息。
-        (3)v2ray默认是300个节点；sing-box默认是50个节点，最大150个节点；clash默认100个节点，最大150个节点。
-
-    4、template：是否启用sing-box、clash配置模板，默认是启用的，可选true、false值。
-    
-    5、proxytype（proxy）：选择什么协议的节点？只能选择vless、trojan，这里指您在配置文件中，存放的节点类型，符合要求的，才使用它。
-
-    6、userid：指定使用哪个toml配置信息，生成v2ray链接或sing-box、clash配置文件？它是虚构的，是根据toml文件的配置，数组下标+1来计算的。
-    例如：
-        userid=1就是使用第一个节点的配置信息，2就是使用第二个节点的配置信息，以此类推。
-        userid值的范围是[0,?)，为0是随机配置信息，超过代理配置的总个数，也是随机配置信息。
-    注意：
-        (1)proxy 和 userid 两个都设置，只使用userid的值，proxy的值无效。
-        (2)所有的vless在前面，trojan在后面，不是按照toml的书写顺序排序的，如果userid的顺序跟toml中书写的顺序有出入，建议调整一下toml文件中的代理信息顺序，方便下次使用
-
-    7、tls（tlsmode）：默认是tls端口的数据。这个只针对csv文件有端口的，用于控制读取data目录下哪些端口对应的数据，也就是除了[80, 8080, 8880, 2052, 2082, 2086, 2095]的其它端口对应的数据。
-
-    8、dport（defaultport）：默认0端口，随机tls的端口。data目录下，读取到txt、csv文件的数据中，没有端口的情况，才使用这里设置的默认端口，workers.dev的host，由内部随机生成。
-
-—————————————————————————————————————————————————————————————————————————————————————————————————
-温馨提示：
-
-    使用 Cloudflare workers 搭建的 trojan 节点，转换为 clash.mate/mihomo 订阅使用，PROXYIP 地址可能会丢失，跟没有设置 PROXYIP 效果一样，也就是不能使用它访问一些地区封锁的网站，比如：ChatGPT、Netflix 等。"#;
-
-    let repalced_html = html_doc.replace("{host_address}", &host_address);
+    let repalced_html = SPECIFICATION.replace("127.0.0.1:10222", &host_address);
 
     // 获取当前局域网IP地址
     let ip_address = local_ip().unwrap().to_string();
