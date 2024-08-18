@@ -11,7 +11,7 @@ const SPECIFICATION: &str = include_str!("../使用说明.txt");
 async fn index(req: HttpRequest) -> impl Responder {
     let host_address = req.connection_info().host().to_owned();
 
-    let repalced_html = SPECIFICATION.replace("127.0.0.1:10222", &host_address);
+    let html_doc = SPECIFICATION.replace("127.0.0.1:10222", &host_address);
 
     // 获取当前局域网IP地址
     let ip_address = local_ip().unwrap().to_string();
@@ -27,7 +27,7 @@ async fn index(req: HttpRequest) -> impl Responder {
     );
 
     // 生成二维码并将html_body嵌入网页中
-    let html_content = utils::qrcode::generate_html_with_qrcode(&repalced_html, &url);
+    let html_content = utils::qrcode::generate_html_with_qrcode(&html_doc, &url);
 
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
