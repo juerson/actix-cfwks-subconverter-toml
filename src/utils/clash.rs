@@ -23,7 +23,14 @@ pub fn build_clash_json(
                 let host: String = prxy.node.host;
                 let server_name: String = prxy.node.server_name.unwrap_or_default();
                 let toml_ss_tls = prxy.node.tls.unwrap_or(true);
+                let toml_type = prxy.node.network.unwrap_or("ws".to_string()).to_lowercase();
+                let toml_mode = prxy.node.mode.unwrap_or_default().to_lowercase();
                 let path: String = prxy.node.path;
+
+                // class.meta、mihomo不支持xhttp协议的，其他的协议，诸如：tcp、kcp、httpupgrade、h2、quic、grpc的暂不考虑支持
+                if toml_mode != "" && toml_type != "ws" {
+                    continue;
+                }
 
                 let condition = if ["vless", "trojan", "vmess"].contains(&node_type) {
                     host.ends_with("workers.dev")
