@@ -89,7 +89,7 @@ tls = true                                              # tls = true 意思使�
 random_ports = [443, 2053, 2083, 2087, 2096, 8443]      # 跟tls的端口要保持一致
 
 # xhttp，目前只支持xray内核的v2rayN、v2rayNG客户端使用，shadowsocks生成的节点分享链接只能服务于 nekoray（singbox内核）的客户端使用，无法导入v2rayN、v2rayNG客户端使用
-# shadowsocks协议的，不管有没有实现服务端的xhttp，还是已经实现ws的，想在xrayN、v2rayNG客户端使用，只能手动添加，不能批量生成分享链接；xray的json配置文件，研究不深，貌似只能写一个节点在JSON配置的。
+# shadowsocks协议的，不管有没有实现服务端的xhttp，还是已经实现ws的，想在xrayN、v2rayNG客户端使用，只能手动添加，不能批量生成分享链接导入使用；xray的json配置文件，研究不深，貌似只能写一个节点在JSON配置的。
 
 # ——————————————————————————————————————————————————————————————————
 
