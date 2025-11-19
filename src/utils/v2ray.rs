@@ -25,7 +25,14 @@ pub fn build_v2ray_link(
                 let host: String = prxy.node.host;
                 let server_name: String = prxy.node.server_name.unwrap_or_default();
                 let toml_ss_tls = prxy.node.tls.unwrap_or(true);
+                let toml_type = prxy.node.network.unwrap_or("ws".to_string()).to_lowercase();
+                let toml_mode = prxy.node.mode.unwrap_or_default().to_lowercase();
                 let path: String = prxy.node.path;
+
+                // nekoray实际是singbox内核，不支持xhttp协议的，故ss代理除了ws的其他协议都不考虑支持了，跳过。
+                if node_type == "ss" && toml_type != "ws" && toml_mode != "" {
+                    continue;
+                }
 
                 let condition = if ["vless", "trojan", "vmess"].contains(&node_type) {
                     host.ends_with("workers.dev")
@@ -69,6 +76,8 @@ pub fn build_v2ray_link(
                             prxy.node.uuid.unwrap_or_default(),
                             security,
                             host,
+                            toml_type,
+                            toml_mode,
                             server_name,
                             path,
                             fingerprint,
@@ -83,6 +92,8 @@ pub fn build_v2ray_link(
                             prxy.node.uuid.unwrap_or_default(),
                             security,
                             host,
+                            toml_type,
+                            toml_mode,
                             server_name,
                             path,
                             fingerprint,
@@ -97,6 +108,8 @@ pub fn build_v2ray_link(
                             prxy.node.password.unwrap_or_default(),
                             security,
                             host,
+                            toml_type,
+                            toml_mode,
                             server_name,
                             path,
                             fingerprint,
@@ -163,6 +176,8 @@ fn build_trojan_linnk(
     password: String,
     security: &str,
     host: String,
+    toml_type: String,
+    toml_mode: String,
     sni: String,
     path: String,
     fingerprint: String,
@@ -173,7 +188,8 @@ fn build_trojan_linnk(
     params.insert("security", security);
     params.insert("sni", &sni);
     params.insert("fp", &fingerprint);
-    params.insert("type", "ws");
+    params.insert("type", &toml_type);
+    params.insert("mode", &toml_mode);
     params.insert("host", &host);
     params.insert("path", &path);
     params.insert("allowInsecure", "1");
@@ -193,6 +209,8 @@ fn build_vless_link(
     uuid: String,
     security: &str,
     host: String,
+    toml_type: String,
+    toml_mode: String,
     sni: String,
     path: String,
     fingerprint: String,
@@ -202,7 +220,8 @@ fn build_vless_link(
     let mut params = BTreeMap::new();
     params.insert("encryption", "none");
     params.insert("security", &security);
-    params.insert("type", "ws");
+    params.insert("type", &toml_type);
+    params.insert("mode", &toml_mode);
     params.insert("host", &host);
     params.insert("path", &path);
     params.insert("sni", &sni);
@@ -223,6 +242,8 @@ fn build_vmess_link(
     uuid: String,
     security: &str,
     host: String,
+    toml_type: String, // type => net字段
+    toml_mode: String, // mode => type字段
     sni: String,
     path: String,
     fingerprint: String,
@@ -230,6 +251,10 @@ fn build_vmess_link(
     let tls = match security == "tls" {
         true => "tls",
         false => "",
+    };
+    let vmess_type = match toml_mode.is_empty() {
+        true => "none", // 防止空字符的mode字段值
+        false => toml_mode.as_str(),
     };
     let vmess = json!({
         "ps": remarks,
@@ -239,8 +264,8 @@ fn build_vmess_link(
         "id": uuid,
         "aid": 0,
         "scy": "zero",
-        "net": "ws",
-        "type": "none",
+        "net": toml_type,
+        "type": vmess_type,
         "host": host,
         "path": path,
         "tls": tls,

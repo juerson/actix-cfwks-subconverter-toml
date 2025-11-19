@@ -70,9 +70,9 @@ http://127.0.0.1:10222/sub?target=v2ray&source="D:\result.csv"&column=city
 注意：
     1、以上的参数均可随意组合，具体效果自己研究。
     2、转换问题：
-        a.如果转换为v2ray的，支持vless+ws、vless+ws+tls、trojan+ws、vless+ws+tls、ss-v2ray+tls、vmess+ws+tls。
-        b.如果转换为singbox的，支持vless+ws、vless+ws+tls、trojan+ws+tls、ss-v2ray+tls、vmess+ws+tls。
-        c.如果转换为clash的，支持vless+ws、vless+ws+tls、trojan+ws+tls、ss-v2ray+tls、vmess+ws+tls。
+        a.如果转换为v2ray的，支持vless+ws[+tls]、vless+xhttp+tls、trojan+ws[+tls]、trojan+xhttp+tls、vmess+ws+tls、vmess+xhttp+tls、ss-v2ray+tls。
+        b.如果转换为singbox的，支持vless+ws[+tls]、trojan+ws+tls、ss-v2ray+tls、vmess+ws+tls。
+        c.如果转换为clash的，支持vless+ws[+tls]、trojan+ws+tls、ss-v2ray+tls、vmess+ws+tls。
 
 —————————————————————————————————————————————————————————————————————————————————————————————————
 
