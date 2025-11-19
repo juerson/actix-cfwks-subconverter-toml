@@ -28,6 +28,8 @@ pub struct Node {
     pub server_name: Option<String>,
     pub path: String,
     pub random_ports: Option<Vec<u16>>,
+    pub network: Option<String>, // ws、xhttp、tcp、kcp等这类内容
+    pub mode: Option<String>, // stream-one、stream-up、packet-up、auto，有的代理协议用不到这个字段值
 }
 
 #[allow(dead_code)]
@@ -150,7 +152,7 @@ pub fn selecting_config_of_node(
                 None => Err("发生未知错误！".to_string()),
             }
         }
-        
+
         // ——————————————————————————————————————————————————————————————————————————————————————
 
         // vmess+指定id
