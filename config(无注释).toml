@@ -1,0 +1,89 @@
+[[proxies.trojan]]
+remarks_prefix = "①"
+password = "5be5de1d-8653-4ce3-a600-2ca1af75bdb5"
+host = "trojan1.username.workers.dev"
+server_name = "trojan1.username.workers.dev"
+path = "/"
+network = "ws"
+mode = ""
+
+[[proxies.trojan]]
+remarks_prefix = "②"
+password = "0195bf7c-d0d6-72ad-85c7-7a74e7db64f3"
+host = "trojan2.pages.dev"
+server_name = "trojan2.pages.dev"
+path = "/"
+
+[[proxies.trojan]]
+remarks_prefix = "③"
+password = "0195bf7c-d0d6-72ad-85c7-7a74e7db64f3"
+host = "trojan-xhttp.pages.dev"
+server_name = "trojan-xhttp.pages.dev"
+path = "/"
+network = "xhttp"
+mode = "stream-one"
+
+[[proxies.vless]]
+remarks_prefix = "④"
+uuid = "0195bf7c-f8c6-7add-aa36-a2145cc38ebb"
+host = "vless1.username.workers.dev"
+server_name = "vless1.username.workers.dev"
+path = "/?ed=2048"
+network = "ws"
+mode = ""
+
+[[proxies.vless]]
+remarks_prefix = "⑤"
+uuid = "0195bf7d-17d6-704c-bd6b-fa56710382cc"
+host = "vless2.pages.dev"
+server_name = "vless2.pages.dev"
+path = "/?ed=2048"
+
+[[proxies.vless]]
+remarks_prefix = "⑥"
+uuid = "0195bf7d-17d6-704c-bd6b-fa56710382cc"
+host = "vless-xhttp.pages.dev"
+server_name = "vless-xhttp.pages.dev"
+path = "/?ed=2048"
+network = "xhttp"
+mode = "stream-one"
+
+[[proxies.ss]]
+remarks_prefix = "⑦"
+password = "none"
+host = "ss1.username.workers.dev"
+path = "/192.168.1.1-443"
+tls = false
+random_ports = [ 80, 8_080, 8_880, 2_052, 2_082, 2_086, 2_095 ]
+
+[[proxies.ss]]
+remarks_prefix = "⑧"
+password = "none"
+host = "ss2.pages.dev"
+path = "/192.168.1.1-443"
+tls = true
+random_ports = [ 443, 2_053, 2_083, 2_087, 2_096, 8_443 ]
+
+[[proxies.vmess]]
+remarks_prefix = "⑨"
+uuid = "0195bf7c-f8c6-7add-aa36-a2145cc38ebb"
+host = "vmess.xxxxx.com"
+server_name = "vmess.xxxxx.com"
+path = "/"
+random_ports = [ 443, 2_053, 2_083, 2_087, 2_096, 8_443 ]
+
+[[proxies.vmess]]
+remarks_prefix = "⑩"
+uuid = "0195bf7c-f8c6-7add-aa36-a2145cc38ebb"
+host = "vmess-xhttp.xxxxx.com"
+server_name = "vmess-xhttp.xxxxx.com"
+path = "/"
+random_ports = [ 443, 2_053, 2_083, 2_087, 2_096, 8_443 ]
+network = "xhttp"
+mode = "stream-one"
+
+[ech]
+enble_ech = false
+doh = "https://cloudflare-dns.com/dns-query"
+ech_domain = "cloudflare-ech.com"
+ech_config_list = "cloudflare-ech.com+https://dns.alidns.com/dns-query"
