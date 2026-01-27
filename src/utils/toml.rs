@@ -6,6 +6,7 @@ use std::usize;
 #[derive(Debug, Deserialize, Clone, Default)]
 pub struct Config {
     pub proxies: Proxy,
+    pub ech: Option<EchArgs>,
 }
 
 #[allow(dead_code)]
@@ -15,6 +16,18 @@ pub struct Proxy {
     trojan: Option<Vec<Node>>,
     ss: Option<Vec<Node>>,
     vmess: Option<Vec<Node>>,
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct EchArgs {
+    /*
+    例如："AEX+DQBBCgAgACDisSCHN77Ah26T78buZIBUJ7ZUM8ZAqpom+EAnZiyzTQAEAAEAAQASY2xvdWRmbGFyZS1lY2guY29tAAA=" (有时间限制，会过期)
+         "cloudflare-ech.com+https://dns.alidns.com/dns-query" (永久有效，除非域名被墙)
+     */
+    pub ech_config_list: Option<String>, // 自定义v2rayN上的EchConfigList字段内容
+    pub doh: Option<String>,             // DoH服务器地址，用于查询ECH参数
+    pub ech_domain: Option<String>,      // ECH域名，用于查询ECH域名
+    pub enble_ech: Option<bool>,        // 是否启用ECH功能
 }
 
 #[allow(dead_code)]
