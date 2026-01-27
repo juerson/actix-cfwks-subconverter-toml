@@ -1,10 +1,21 @@
-【TOML版】本工具的功能：批量将优选的IP(不是WARP的优选IP)或域名，写入到 Cloudflare 搭建的 vless/trojan/ss-v2ray 协议的配置节点中，并转换为 v2ray、sing-box、clash.mate/mihomo 订阅!
+【TOML版】本工具的功能：
+    批量将优选的IP或域名，写入到 Cloudflare 搭建的 vless/trojan/shadowsocks/vmess 协议的配置节点中，并转换为 v2ray、sing-box、clash.mate/mihomo 订阅输出!
 
 —————————————————————————————————————————————————————————————————————————————————————————————————
 
 web服务地址：http://127.0.0.1:10222
 
-订阅地址格式：http://127.0.0.1:10222/sub?target=[v2ray,singbox,clash]&page=[0,?)&template=[true,false]&n=[1..?]&type=[vless,trojan,ss,vmess]&id=[1..?)&tls=[true,false]&dport=[80..65535)&source="D:\result.csv"&column=[colo,loc,region,city]
+订阅地址格式：http://127.0.0.1:10222/sub?target=[v2ray,singbox,clash]
+                                    &page=[0,?)
+                                    &template=[true,false]
+                                    &n=[1..?]
+                                    &type=[vless,trojan,ss,vmess]
+                                    &id=[1..?)
+                                    &tls=[true,false]
+                                    &dport=[80..65535)
+                                    &source="D:\result.csv"
+                                    &column=[colo,loc,region,city]
+                                    &fetch_ech=[true,false]
 
 —————————————————————————————————————————————————————————————————————————————————————————————————
 
@@ -22,6 +33,7 @@ http://127.0.0.1:10222/sub?target=clash&template=false
 http://127.0.0.1:10222/sub?target=v2ray
 http://127.0.0.1:10222/sub?target=singbox
 http://127.0.0.1:10222/sub?target=clash
+
 ——————————————————————————————
 http://127.0.0.1:10222/sub?target=v2ray&page=2
 http://127.0.0.1:10222/sub?target=singbox&page=2
@@ -66,13 +78,16 @@ http://127.0.0.1:10222/sub?target=singbox&source="D:\result.csv"&column=loc
 http://127.0.0.1:10222/sub?target=clash&source="D:\result.csv"&column=region
 http://127.0.0.1:10222/sub?target=v2ray&source="D:\result.csv"&column=city
 
+http://127.0.0.1:10222/sub?target=v2ray&fetch_ech=true
 
 注意：
     1、以上的参数均可随意组合，具体效果自己研究。
     2、转换问题：
-        a.如果转换为v2ray的，支持vless+ws[+tls]、vless+xhttp+tls、trojan+ws[+tls]、trojan+xhttp+tls、vmess+ws+tls、vmess+xhttp+tls、ss-v2ray+tls。
-        b.如果转换为singbox的，支持vless+ws[+tls]、trojan+ws+tls、ss-v2ray+tls、vmess+ws+tls。
-        c.如果转换为clash的，支持vless+ws[+tls]、trojan+ws+tls、ss-v2ray+tls、vmess+ws+tls。
+        a.转换为v2ray的，支持：
+            ws：vless+ws[+tls][+ech]、trojan+ws[+tls][+ech]、shadowsocks+ws+tls、vmess+ws+tls
+            xhttp：vless+xhttp+tls、trojan+xhttp+tls、vmess+xhttp+tls。
+        b.如果转换为singbox的，支持vless+ws[+tls]、trojan+ws[+tls]、shadowsocks+ws+tls、vmess+ws+tls。
+        c.如果转换为clash的，支持vless+ws[+tls]、trojan+ws+tls、shadowsocks+ws+tls、vmess+ws+tls。
 
 —————————————————————————————————————————————————————————————————————————————————————————————————
 
@@ -120,12 +135,44 @@ http://127.0.0.1:10222/sub?target=v2ray&source="D:\result.csv"&column=city
         region："region", "区域", "地区"
         city："city", "城市"
 
+    10、fetch_ech：网上获取EchConfigList值，将它写入节点，还有结合config.toml文件中ech的enble_ech参数值使用，没有该uri参数值，就以toml文件中的ech_config_list为准
+        http://127.0.0.1:10222/sub?target=v2ray&fetch_ech=true
+
+—————————————————————————————————————————————————————————————————————————————————————————————————
+
+关于ECH值写入，只支持 vless/trojan+ws+tls 的 v2ray 目标的订阅添加，同时 config.toml 配置文件中，也要将 enble_ech 开启
+
+订阅链接：
+1、使用自己在toml文件中提供的ech_config_list值，无脑写入
+    http://127.0.0.1:10222/sub?target=v2ray
+2、在线获取，有效期短，有5分钟缓存(既防止用户频繁刷新获取订阅；又防止刚获取最新的结果，远程刷新新值，导致自己不能用了，要等缓存时间过期)，不用频繁发起doh请求而查询(网络或时间到而中断节点，重连又查dns记录)
+    http://127.0.0.1:10222/sub?target=v2ray&fetch_ech=true
+
+[ech]
+enble_ech = true  # 是否启用ECH功能，默认false不启用
+doh = "https://cloudflare-dns.com/dns-query"
+ech_domain = "cloudflare-ech.com"
+ech_config_list = "cloudflare-ech.com+https://dns.alidns.com/dns-query"
+
+注意：
+1、支持添加ech值需要更换服务端的脚本代码吗？
+    答：不需要，如果脚本中，将websocket客户端传来的早期数据添加到读取流中(如下)，那么原服务端不用重新换代码部署，原来就是支持cf的Encrypted Client Hello(ECH)，当然最终还需自己添加测试。
+    const earlyDataHeader = request.headers.get('sec-websocket-protocol') || '';
+    const webSocketReadableStream = makeWebSocketReadableStream(webSocket, earlyDataHeader, log);
+2、目前，哪些协议支持生成的ech对应的链接？
+    答：只有vless/trojan+ws+tls。至于shadowsocks/vmess+ws+tls没有提供官方链接，只能手动一个个节点添加。
+    注意：目前不支持 xhttp 底层数据传输协议。
+3、添加对应的ech值是一直有效吗？
+    答：不是永久有效的，如："AEX+DQBBCgAgACDisSCHN77Ah26T78buZIBUJ7ZUM8ZAqpom+EAnZiyzTQAEAAEAAQASY2xvdWRmbGFyZS1lY2guY29tAAA=" 这种格式，有效期很短，必须经常更新最新的；
+        "cloudflare-ech.com+https://dns.alidns.com/dns-query" 这种格式也会失效，只是它会在线自动获取，看起来是永远有效的，假如查询的域名或网络出问题，就会导致节点用不了。
+
 —————————————————————————————————————————————————————————————————————————————————————————————————
 
 温馨提示：
 
-    1、使用 Cloudflare workers 搭建的 vless/trojan/ss-v2ray 节点，转换为 singbox/clash.mate/mihomo 订阅使用，PROXYIP 地址可能会丢失，跟没有设置 PROXYIP 效果一样，也就是不能使用它访问一些地区封锁的网站，比如：ChatGPT、Netflix 等。
-    2、ss-v2ray+tls+websocket，订阅链接(v2ray)只能在支持v2ray插件扩展的代理客户端中使用，直接复制或在v2rayN中订阅无法添加使用的，经测试可以黏贴到NekoBox中使用。
+    1、使用 Cloudflare workers 搭建的 vless/trojan/shadowsocks/vmess 节点，转换为 singbox/clash.mate/mihomo 订阅使用，PROXYIP 地址可能会丢失，跟没有设置 PROXYIP 效果一样，也就是不能使用它访问一些地区封锁的网站，比如：ChatGPT、Netflix 等。
+    2、shadowsocks+tls+websocket，订阅链接(v2ray) nekoray 和 v2rayN/v2rayNG 都支持了，如：
         例如：ss://bm9uZTowMTk1YzQ3Ni02M2Y4LTcyMzItYWM0Mi0wYWMxZWFhYmU5MzQ=@104.19.177.137:2096?plugin=v2ray-plugin;tls;mux%3D0;mode%3Dwebsocket;path%3D/192.168.1.1-443;host%3Dss1.pages.dev#⑤|104.19.177.137:2096
+    3、config.toml中的random_ports无特殊要求就注释掉，不要添加上去，要不然，后面软件使用时，可能发现端口和tls冲突，导致连接不上，特别是使用ech的
 
 —————————————————————————————————————————————————————————————————————————————————————————————————
