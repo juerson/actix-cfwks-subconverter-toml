@@ -4,6 +4,10 @@
 # vless/trojan/vmess+xhttp，只能是target=v2ray => xray的v2rayN使用！singbox和mihomo内核不支持xhttp协议的使用
 # 小技巧：想要xhttp的，就在对应的节点配置后面添加network = "xhttp"和mode = "stream-one"字段即可，ws的保持原来的样子
 
+# 2026.1.27 更新说明：
+# 支持ECH功能，可以搭配 url的target=v2ray&fetch_ech=true 参数使用，决定是否在线获取ECH参数值，覆盖 ech_config_list 字段内容 (覆盖的，有效期的)
+# 注意：目前只有vless和trojan协议支持ECH功能，vmess和shadowsocks协议不支持ECH功能，还有xhttp底层传输协议也不支持ECH功能
+
 # trojan+ws
 [[proxies.trojan]]
 remarks_prefix = "①"
@@ -11,8 +15,8 @@ password = "5be5de1d-8653-4ce3-a600-2ca1af75bdb5"
 host = "trojan1.username.workers.dev"
 server_name = "trojan1.username.workers.dev"
 path = "/"
-random_ports = [80, 8080, 8880, 2052, 2082, 2086, 2095]  # 跟非tls的端口要保持一致
-network = "ws"                                           # 内部默认是 ws 也就是 websocket 协议的，可以省略，mode字段也可以省略
+# random_ports = [80, 8080, 8880, 2052, 2082, 2086, 2095]  # 跟非tls的端口要保持一致
+network = "ws"                                             # 内部默认是 ws 也就是 websocket 协议的，可以省略，mode字段也可以省略
 mode = ""
 
 # trojan+ws+tls
@@ -22,7 +26,7 @@ password = "0195bf7c-d0d6-72ad-85c7-7a74e7db64f3"
 host = "trojan2.pages.dev"
 server_name = "trojan2.pages.dev"
 path = "/"
-random_ports = [443, 2053, 2083, 2087, 2096, 8443]       # 跟tls的端口要保持一致
+# random_ports = [443, 2053, 2083, 2087, 2096, 8443]       # 跟tls的端口要保持一致
 
 # trojan+xhttp+tls
 [[proxies.trojan]]
@@ -31,7 +35,7 @@ password = "0195bf7c-d0d6-72ad-85c7-7a74e7db64f3"
 host = "trojan-xhttp.pages.dev"
 server_name = "trojan-xhttp.pages.dev"
 path = "/"
-random_ports = [443, 2053, 2083, 2087, 2096, 8443]       # 跟tls的端口要保持一致
+# random_ports = [443, 2053, 2083, 2087, 2096, 8443]       # 跟tls的端口要保持一致
 network = "xhttp"
 mode = "stream-one"
 
@@ -44,8 +48,8 @@ uuid = "0195bf7c-f8c6-7add-aa36-a2145cc38ebb"
 host = "vless1.username.workers.dev"
 server_name = "vless1.username.workers.dev"
 path = "/?ed=2048"
-random_ports = [80, 8080, 8880, 2052, 2082, 2086, 2095]  # 跟非tls的端口要保持一致
-network = "ws"                                           # 内部默认是 ws 也就是 websocket 协议的，可以省略，mode字段也可以省略
+# random_ports = [80, 8080, 8880, 2052, 2082, 2086, 2095]  # 跟非tls的端口要保持一致
+network = "ws"                                             # 内部默认是 ws 也就是 websocket 协议的，可以省略，mode字段也可以省略
 mode = ""
 
 # vless+ws+tls
@@ -55,7 +59,7 @@ uuid = "0195bf7d-17d6-704c-bd6b-fa56710382cc"
 host = "vless2.pages.dev"
 server_name = "vless2.pages.dev"
 path = "/?ed=2048"
-random_ports = [443, 2053, 2083, 2087, 2096, 8443]      # 跟tls的端口要保持一致
+# random_ports = [443, 2053, 2083, 2087, 2096, 8443]      # 跟tls的端口要保持一致
 
 # vless+xhttp+tls
 [[proxies.vless]]
@@ -64,7 +68,7 @@ uuid = "0195bf7d-17d6-704c-bd6b-fa56710382cc"
 host = "vless-xhttp.pages.dev"
 server_name = "vless-xhttp.pages.dev"
 path = "/?ed=2048"
-random_ports = [443, 2053, 2083, 2087, 2096, 8443]      # 跟tls的端口要保持一致
+# random_ports = [443, 2053, 2083, 2087, 2096, 8443]      # 跟tls的端口要保持一致
 network = "xhttp"
 mode = "stream-one"
 
@@ -115,9 +119,23 @@ mode = "stream-one"
 
 # ——————————————————————————————————————————————————————————————————
 
+[ech]
+# enble_ech：是否启用ECH功能，默认false不启用
+enble_ech = false
+doh = "https://cloudflare-dns.com/dns-query"
+ech_domain = "cloudflare-ech.com"
+ech_config_list = "cloudflare-ech.com+https://dns.alidns.com/dns-query"
+
+# ——————————————————————————————————————————————————————————————————
+
 # 后面可以继续添加
 # 推荐：使用trojan、vless、ss-v2ray、vmess顺序排序，可以在url中，传入id=1参数来定位，使用哪个配置
 # 注意：
 #   1、这里配置的random_ports，如果配置不对，可能强制使用这里的端口，导致以为代码选择不对的端口，自我怀疑
-#   2、导入v2rayN、NekoBox客户端使用，预计不使用tls模式的，结果发现wokers.dev启用tls模式，应该是代理软件问题，自动开启TLS模式（不保证百分百准确）
+#   2、导入v2rayN、NekoBox客户端使用，预计不使用tls模式的，结果发现wokers.dev启用tls模式，应该是ech开启或代理软件问题，自动开启TLS模式（不保证百分百准确）
 #   3、前面的配置，选择性使用，你有对应的节点才添加
+#   4、如果ech的enble_ech开启，建议将random_ports字段注释掉，会使用tls相关的443等端口，避免写到非tls的80等端口，导致无法连接
+
+# 使用小技巧，目前这个文件，注释比较多，被干预到，可以先toml转换为yaml，再yaml转换为toml，注释会被去掉，变得简洁一些，最后在添加自己的参数。
+# https://it-tools.tech/toml-to-yaml
+# https://it-tools.tech/yaml-to-toml
