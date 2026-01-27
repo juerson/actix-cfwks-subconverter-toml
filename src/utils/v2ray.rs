@@ -1,11 +1,11 @@
-use crate::utils::toml::{selecting_config_of_node, Proxy};
+use super::toml::{selecting_config_of_node, Proxy};
 use base64::{engine::general_purpose::URL_SAFE, Engine};
 use rand::seq::SliceRandom;
 use serde_json::json;
 use serde_qs as qs;
 use std::collections::BTreeMap;
 
-pub fn build_v2ray_link(
+pub async fn build_v2ray_link(
     toml_proxies: &Proxy,
     csv_tag: String,
     csv_addr: String,
@@ -14,8 +14,9 @@ pub fn build_v2ray_link(
     uri_userid: u8,
     uri_proxy_type: String,
     fingerprint: String,
-    http_ports: &[u16; 7],  // 非TLS 模式下，http的端口
-    https_ports: &[u16; 6], // TLS 模式下，https的端口
+    http_ports: &[u16; 7],   // 非TLS 模式下，http的端口
+    https_ports: &[u16; 6],  // TLS 模式下，https的端口
+    ech_config_list: String, // ECH 配置内容
 ) -> String {
     for _ in 0..100 {
         match selecting_config_of_node(toml_proxies, uri_proxy_type.clone(), uri_userid) {
@@ -34,13 +35,22 @@ pub fn build_v2ray_link(
                     continue;
                 }
 
+                let mut ech_config_list_clone = ech_config_list.clone();
+                if toml_type == "xhttp" {
+                    ech_config_list_clone = "".to_string(); // 先过滤掉xhttp协议不支持ECH的，后面再具体那个协议不支持
+                }
+
                 let condition = if ["vless", "trojan", "vmess"].contains(&node_type) {
                     host.ends_with("workers.dev")
                 } else {
                     !toml_ss_tls // ss协议的
                 };
 
-                let (security, mut ports, reverse_ports) = match condition {
+                let (security, mut ports, reverse_ports) = match condition
+                    && (ech_config_list_clone.is_empty()
+                        || (!ech_config_list_clone.is_empty()
+                            && !["vless", "trojan"].contains(&node_type)))
+                {
                     true => ("none", http_ports.to_vec(), https_ports.to_vec()),
                     false => ("tls", https_ports.to_vec(), http_ports.to_vec()),
                 };
@@ -81,6 +91,7 @@ pub fn build_v2ray_link(
                             server_name,
                             path,
                             fingerprint,
+                            ech_config_list_clone,
                         );
                         return link;
                     }
@@ -113,6 +124,7 @@ pub fn build_v2ray_link(
                             server_name,
                             path,
                             fingerprint,
+                            ech_config_list_clone,
                         );
                         return link;
                     }
@@ -181,6 +193,7 @@ fn build_trojan_linnk(
     sni: String,
     path: String,
     fingerprint: String,
+    ech_config_list: String,
 ) -> String {
     let encoding_remarks = urlencoding::encode(&remarks);
 
@@ -193,6 +206,7 @@ fn build_trojan_linnk(
     params.insert("host", &host);
     params.insert("path", &path);
     params.insert("allowInsecure", "1");
+    params.insert("ech", &ech_config_list);
 
     // 过滤掉值为空的键值对，然后将数据结构序列化为Query String格式的字符串
     let all_params_str: String = serialize_to_query_string(params);
@@ -214,6 +228,7 @@ fn build_vless_link(
     sni: String,
     path: String,
     fingerprint: String,
+    ech_config_list: String,
 ) -> String {
     let encoding_remarks = urlencoding::encode(remarks);
 
@@ -227,6 +242,7 @@ fn build_vless_link(
     params.insert("sni", &sni);
     params.insert("fp", &fingerprint);
     params.insert("allowInsecure", "1");
+    params.insert("ech", &ech_config_list);
 
     // 过滤掉值为空的键值对，然后将数据结构序列化为Query String格式的字符串
     let all_params_str = serialize_to_query_string(params);

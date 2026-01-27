@@ -10,6 +10,7 @@ use serde_urlencoded::from_str;
 use serde_yaml::Value as YamlValue;
 use utils::{
     clash::{add_clash_template, build_clash_json},
+    ech::process_ech,
     file_data::MyData,
     indent::adjust_yaml_indentation,
     singbox::{add_singbox_template, build_singbox_json},
@@ -50,6 +51,7 @@ pub struct Params {
     pub tls_mode: bool,
     pub data_source: String,
     pub page: usize,
+    pub fetch_ech: bool,
 }
 
 /// 基于HTTP传输协议的vless、trojan、ss-v2ray代理转换v2ray、sing-box、clash订阅工具
@@ -122,6 +124,7 @@ async fn subconverter(req: HttpRequest, data: web::Data<AppState>) -> impl Respo
         proxy_type: "".to_string(), // 使用toml配置中，哪些代理信息，可选：[vless,trojan]
         data_source: "./data".to_string(),
         column_name: "colo".to_string(), // csv文件中，以哪个列的字段名作为前缀？可选：[colo,loc,region,city]
+        fetch_ech: false,                // 是否在线获取ECH Base64值
     };
 
     // ———————————————————————————————— 解析URI参数 —————————————————————————————————
@@ -151,6 +154,8 @@ async fn subconverter(req: HttpRequest, data: web::Data<AppState>) -> impl Respo
                 .contains(&port)
                 .then_some(port)
                 .unwrap_or(uri_params.default_port);
+        } else if vec!["fetchech", "fetch_ech"].contains(&key.to_lowercase().as_str()) {
+            uri_params.fetch_ech = string_to_bool(&value, uri_params.fetch_ech);
         }
     }
 
@@ -223,6 +228,12 @@ async fn subconverter(req: HttpRequest, data: web::Data<AppState>) -> impl Respo
         .map(|chunk| chunk.to_vec())
         .collect();
 
+    // ————————————————————— VLESS And Trojan to v2rayN ECH 配置 ———————————————————
+
+    // toml判断是否添加ech，再根据fetch_ech值判断是在线获取,还是读取toml中的ech_config_list
+    let toml_ech = toml_value.ech.unwrap_or_default();
+    let ech_config_list = process_ech(toml_ech, &uri_params.fetch_ech).await;
+
     // —————————————————————————————————— 构建节点 ——————————————————————————————————
 
     let uri_port = uri_params.default_port;
@@ -255,7 +266,9 @@ async fn subconverter(req: HttpRequest, data: web::Data<AppState>) -> impl Respo
                             fingerprint.to_string(),
                             &HTTP_PORTS,
                             &HTTPS_PORTS,
-                        );
+                            ech_config_list.clone(),
+                        )
+                        .await;
                         if !link.is_empty() {
                             vec.push(("".to_string(), link));
                         }
