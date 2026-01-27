@@ -1,4 +1,4 @@
-use crate::utils::file_data::{ self, FileData, MyData };
+use super::file_data::{ self, FileData, MyData };
 use reqwest;
 use csv::ReaderBuilder;
 use crossbeam_channel::unbounded;

@@ -1,4 +1,4 @@
-use crate::utils::toml::{selecting_config_of_node, Proxy};
+use super::toml::{selecting_config_of_node, Proxy};
 use rand::seq::SliceRandom;
 use serde_json::{json, Value as JsonValue};
 
