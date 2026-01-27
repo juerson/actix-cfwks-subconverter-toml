@@ -5,10 +5,10 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
-toml = { version = "0.8", features = ["preserve_order"] } # 保持 TOML 文件中键值对的原始顺序
+toml = { version = "0.9", features = ["preserve_order"] } # 保持 TOML 文件中键值对的原始顺序
 rand = "0.8.5"
 serde_urlencoded = "0.7.1"
-serde_qs = "0.14.0"
+serde_qs = "0.15.0"
 urlencoding = "2.1.3"
 lazy_static = "1.5.0"
 regex = "1"
@@ -21,10 +21,13 @@ qrcode = "0.14"
 image = "0.25"
 base64 = "0.22.1"
 yaml-rust = "0.4"
-csv = "1.3.1"
+csv = "1.4.0"
 tokio = { version = "1", features = ["full"] }
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.13", features = ["json"] }
 crossbeam-channel = "0.5"
+bytes = "1.11.0"
+anyhow = "1.0"
+once_cell = "1.21"
 
 # [[bin]]
 # name = "app"
