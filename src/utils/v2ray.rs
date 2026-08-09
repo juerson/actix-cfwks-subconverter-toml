@@ -205,7 +205,7 @@ fn build_trojan_linnk(
     params.insert("mode", &toml_mode);
     params.insert("host", &host);
     params.insert("path", &path);
-    params.insert("allowInsecure", "1");
+    // params.insert("allowInsecure", "1");
     params.insert("ech", &ech_config_list);
 
     // 过滤掉值为空的键值对，然后将数据结构序列化为Query String格式的字符串
@@ -241,7 +241,7 @@ fn build_vless_link(
     params.insert("path", &path);
     params.insert("sni", &sni);
     params.insert("fp", &fingerprint);
-    params.insert("allowInsecure", "1");
+    // params.insert("allowInsecure", "1");
     params.insert("ech", &ech_config_list);
 
     // 过滤掉值为空的键值对，然后将数据结构序列化为Query String格式的字符串
