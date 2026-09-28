@@ -2,6 +2,7 @@ use super::toml::{selecting_config_of_node, Proxy};
 use rand::seq::SliceRandom;
 use serde_json::{json, Value as JsonValue};
 use serde_yaml::Value as YamlValue;
+use std::{net::IpAddr, str::FromStr};
 
 pub fn build_clash_json(
     toml_proxies: &Proxy,
@@ -23,12 +24,18 @@ pub fn build_clash_json(
                 let host: String = prxy.node.host;
                 let server_name: String = prxy.node.server_name.unwrap_or_default();
                 let toml_ss_tls = prxy.node.tls.unwrap_or(true);
-                let toml_type = prxy.node.network.unwrap_or("ws".to_string()).to_lowercase();
+                let toml_network = prxy.node.network.unwrap_or("ws".to_string()).to_lowercase();
                 let toml_mode = prxy.node.mode.unwrap_or_default().to_lowercase();
                 let path: String = prxy.node.path;
+                let uuid: String = prxy
+                    .node
+                    .uuid
+                    .unwrap_or("00000000-0000-0000-0000-000000000000".to_string());
+                let method: String = prxy.node.method.unwrap_or("none".to_string()); // shadowSocks的加密方式，默认是none
+                let password: String = prxy.node.password.unwrap_or("unset".to_string());
 
-                // class.meta、mihomo不支持xhttp协议的，其他的协议，诸如：tcp、kcp、httpupgrade、h2、quic、grpc的暂不考虑支持
-                if toml_mode != "" && toml_type != "ws" {
+                // xhttp底层协议，仅支持vless可用，其它协议，内核暂不支持
+                if toml_mode != "" && toml_network != "ws" && node_type != "vless" {
                     continue;
                 }
 
@@ -55,12 +62,14 @@ pub fn build_clash_json(
                 if is_continue {
                     continue;
                 }
+                
+                let formatted_addr = format_ip(&csv_addr);
                 // 节点的别名
                 let remarks = match (csv_tag.trim().is_empty(), toml_tag.is_empty()) {
-                    (true, true) => format!("{}:{}", csv_addr, port), // cvs_tag与toml_tag都没有
-                    (false, true) => format!("{}|{}:{}", csv_tag, csv_addr, port), // 仅有csv_tag
-                    (true, false) => format!("{}|{}:{}", toml_tag, csv_addr, port), // 仅有toml_tag
-                    (false, false) => format!("{}{}|{}:{}", toml_tag, csv_tag, csv_addr, port), // 既有csv_tag，也有toml_tag
+                    (true, true) => format!("{}:{}", formatted_addr, port), // cvs_tag与toml_tag都没有
+                    (false, true) => format!("{}|{}:{}", csv_tag, formatted_addr, port), // 仅有csv_tag
+                    (true, false) => format!("{}|{}:{}", toml_tag, formatted_addr, port), // 仅有toml_tag
+                    (false, false) => format!("{}{}|{}:{}", toml_tag, csv_tag, formatted_addr, port), // 既有csv_tag，也有toml_tag
                 };
 
                 match node_type {
@@ -69,8 +78,10 @@ pub fn build_clash_json(
                             remarks,
                             csv_addr.clone(),
                             port,
-                            prxy.node.uuid.unwrap_or_default(),
+                            uuid,
                             host,
+                            toml_network,
+                            toml_mode,
                             server_name,
                             path,
                             fingerprint,
@@ -82,7 +93,7 @@ pub fn build_clash_json(
                             remarks,
                             csv_addr.clone(),
                             port,
-                            prxy.node.uuid.unwrap_or_default(),
+                            uuid,
                             host,
                             server_name,
                             path,
@@ -94,7 +105,7 @@ pub fn build_clash_json(
                             remarks,
                             csv_addr.clone(),
                             port,
-                            prxy.node.password.unwrap_or_default(),
+                            password,
                             host,
                             server_name,
                             path,
@@ -107,7 +118,8 @@ pub fn build_clash_json(
                             remarks,
                             csv_addr.clone(),
                             port,
-                            prxy.node.password.unwrap_or("none".to_string()),
+                            method,
+                            password,
                             toml_ss_tls,
                             host,
                             path,
@@ -129,6 +141,7 @@ fn build_ss_clash(
     remarks: String,
     csv_addr: String,
     port: u16,
+    toml_method: String,
     toml_password: String,
     toml_tls: bool,
     toml_host: String,
@@ -139,15 +152,15 @@ fn build_ss_clash(
         "type": "ss",
         "server": csv_addr,
         "port": port,
-        "cipher": "none",
+        "cipher": toml_method,
         "password": toml_password,
         "udp": false,
         "plugin": "v2ray-plugin",
         "plugin-opts": {
             "mode": "websocket",
-            "path": toml_path,
-            "host": toml_host,
             "tls": toml_tls,
+            "host": toml_host,
+            "path": toml_path,
             "mux": false
         }
     });
@@ -175,7 +188,6 @@ fn build_trojan_clash(
         "udp": false,
         "sni": toml_server_name,
         "client-fingerprint": fingerprint,
-        "skip-cert-verify": true,
         "ws-opts": {
             "path": toml_path,
             "headers": {"Host": toml_host}
@@ -191,6 +203,8 @@ fn build_vless_clash(
     port: u16,
     toml_uuid: String,
     toml_host: String,
+    toml_network: String,
+    toml_mode: String,
     toml_server_name: String, // sni
     toml_path: String,
     fingerprint: String,
@@ -199,23 +213,42 @@ fn build_vless_clash(
         true => true,
         false => false,
     };
-    let vless_with_jsonvalue = json!({
+    let mut vless_with_jsonvalue = json!({
         "type": "vless",
         "name": remarks,
         "server": csv_addr,
         "port": port,
         "uuid": toml_uuid,
-        "network": "ws",
+        "network": toml_network,
         "tls": tls,
         "udp": false,
         "servername": toml_server_name,
-        "client-fingerprint": fingerprint,
-        "skip-cert-verify": true,
-        "ws-opts": {
-            "path": toml_path,
-            "headers": {"Host": toml_host}
-        }
+        "client-fingerprint": fingerprint
     });
+
+    if let Some(obj) = vless_with_jsonvalue.as_object_mut() {
+        if toml_network == "ws" {
+            obj.insert("alpn".to_string(), ["http/1.1"].to_vec().into());
+            obj.insert(
+                "ws-opts".to_string(),
+                json!({
+                    "path": toml_path,
+                    "headers": {"Host": toml_host}
+                }),
+            );
+        } else if toml_network == "xhttp" {
+            obj.insert("alpn".to_string(), ["h2"].to_vec().into());
+            obj.insert("encryption".to_string(), "".to_string().into());
+            obj.insert(
+                "xhttp-opts".to_string(),
+                json!({
+                    "path": toml_path,
+                    "host": toml_host,
+                    "mode": toml_mode,
+                }),
+            );
+        }
+    }
 
     (remarks, vless_with_jsonvalue)
 }
@@ -243,7 +276,6 @@ fn build_vmess_clash(
     "cipher": "zero",
     "udp": false,
     "tls": tls,
-    "skip-cert-verify": true,
     "servername": toml_server_name,
     "network": "ws",
     "ws-opts": {
@@ -316,5 +348,13 @@ pub fn add_clash_template(clash_template: &mut YamlValue, clash_data: Vec<(Strin
                 });
             });
         }
+    }
+}
+
+fn format_ip(ip: &str) -> String {
+    match IpAddr::from_str(ip) {
+        Ok(IpAddr::V6(_)) => format!("[{}]", ip),
+        Ok(IpAddr::V4(_)) => ip.to_string(),
+        Err(_) => ip.to_string(),
     }
 }
