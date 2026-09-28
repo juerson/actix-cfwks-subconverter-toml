@@ -43,6 +43,7 @@ pub struct Node {
     pub random_ports: Option<Vec<u16>>,
     pub network: Option<String>, // ws、xhttp、tcp、kcp等这类内容
     pub mode: Option<String>, // stream-one、stream-up、packet-up、auto，有的代理协议用不到这个字段值
+    pub method: Option<String>, // ss拥有，主要是指定加密方式：none（默认）、aes-128-gcm、aes-256-gcm、chacha20-ietf-poly1305、2022-blake3-aes-128-gcm、2022-blake3-aes-256-gcm、2022-blake3-chacha20-poly1305
 }
 
 #[allow(dead_code)]
