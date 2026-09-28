@@ -26,14 +26,12 @@ const CLASH_TEMPLATE_PATH: &str = "template/clash.yaml";
 lazy_static! {
     static ref HTTP_PORTS: [u16; 7] = [80, 8080, 8880, 2052, 2082, 2086, 2095];
     static ref HTTPS_PORTS: [u16; 6] = [443, 2053, 2083, 2087, 2096, 8443];
-    static ref FINGERPRINT: [&'static str; 9] = [
+    static ref FINGERPRINT: [&'static str; 7] = [
         "chrome",
         "firefox",
         "safari",
         "edge",
-        "random",
         "ios",
-        "android",
         "random",
         "randomized",
     ];
