@@ -1,0 +1,48 @@
+[[proxies.trojan]]
+remarks_prefix = "②"
+password = "0195bf7c-d0d6-72ad-85c7-7a74e7db64f3"
+host = "trojan2.pages.dev"
+server_name = "trojan2.pages.dev"
+path = "/"
+network = "ws"
+mode = ""
+
+[[proxies.vless]]
+remarks_prefix = "⑤"
+uuid = "0195bf7d-17d6-704c-bd6b-fa56710382cc"
+host = "vless2.pages.dev"
+server_name = "vless2.pages.dev"
+path = "/"
+network = "ws"
+mode = ""
+
+[[proxies.ss]]
+remarks_prefix = "⑧"
+password = "none"
+method = "none"
+host = "ss2.pages.dev"
+path = "/"
+tls = true
+
+[[proxies.ss]]
+remarks_prefix = "⑨"
+password = "wd4EwCx+HxB1EBHaDtU1IA=="
+method = "2022-blake3-aes-128-gcm"
+host = "ss3.pages.dev"
+path = "/"
+tls = true
+
+[[proxies.vmess]]
+remarks_prefix = "⑩"
+uuid = "0195bf7c-f8c6-7add-aa36-a2145cc38ebb"
+host = "vmess.xxxxx.com"
+server_name = "vmess.xxxxx.com"
+path = "/"
+network = "ws"
+mode = ""
+
+[ech]
+enble_ech = false
+doh = "https://cloudflare-dns.com/dns-query"
+ech_domain = "cloudflare-ech.com"
+ech_config_list = "cloudflare-ech.com+https://dns.alidns.com/dns-query"
