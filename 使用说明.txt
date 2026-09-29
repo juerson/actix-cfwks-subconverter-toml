@@ -22,6 +22,10 @@ web服务地址：http://127.0.0.1:10222
 订阅示例：
 
 http://127.0.0.1:10222/sub
+http://127.0.0.1:10222/sub?target=v2ray
+http://127.0.0.1:10222/sub?target=singbox
+http://127.0.0.1:10222/sub?target=clash
+
 ——————————————————————————————
 http://127.0.0.1:10222/sub?target=singbox&template=false
 
@@ -29,10 +33,6 @@ http://127.0.0.1:10222/sub?target=singbox&template=false&id=1
 http://127.0.0.1:10222/sub?target=singbox&template=false&type=vless
 
 http://127.0.0.1:10222/sub?target=clash&template=false
-——————————————————————————————
-http://127.0.0.1:10222/sub?target=v2ray
-http://127.0.0.1:10222/sub?target=singbox
-http://127.0.0.1:10222/sub?target=clash
 
 ——————————————————————————————
 http://127.0.0.1:10222/sub?target=v2ray&page=2
@@ -80,14 +80,23 @@ http://127.0.0.1:10222/sub?target=v2ray&source="D:\result.csv"&column=city
 
 http://127.0.0.1:10222/sub?target=v2ray&fetch_ech=true
 
-注意：
-    1、以上的参数均可随意组合，具体效果自己研究。
-    2、转换问题：
-        a.转换为v2ray的，支持：
-            ws：vless+ws[+tls][+ech]、trojan+ws[+tls][+ech]、shadowsocks+ws+tls、vmess+ws+tls
-            xhttp：vless+xhttp+tls、trojan+xhttp+tls、vmess+xhttp+tls。
-        b.如果转换为singbox的，支持vless+ws[+tls]、trojan+ws[+tls]、shadowsocks+ws+tls、vmess+ws+tls。
-        c.如果转换为clash的，支持vless+ws[+tls]、trojan+ws+tls、shadowsocks+ws+tls、vmess+ws+tls。
+以上的参数均可随意组合，具体效果自己研究。
+
+转换订阅问题：
+    1.转换为v2ray的，支持：
+        ws：vless+ws[+tls][+ech]、trojan+ws[+tls][+ech]、vmess+ws+tls、shadowsocks+ws+tls
+        xhttp：vless+xhttp+tls[+ech]、trojan+xhttp+tls[+ech]、vmess+xhttp+tls
+        注：目前发现，v2rayNG 不支持 xhttp，静候以后软件适配。
+    2.转换为singbox的，支持：
+        ws: vless+ws[+tls]、trojan+ws[+tls]、vmess+ws+tls、shadowsocks+ws+tls
+        xhttp: vless+xhttp+tls、trojan+xhttp+tls、vmess+xhttp+tls
+        注：
+          (a) xhttp，目前官方 sing-box 不支持，sing-box 分支的 https://github.com/Leadaxe/sing-box-lx 内核支持，要使用就要下载它的内核替换 `GUI.for.SingBox` 的内核
+          (b) 使用新的sing-box.json配置模板，可以将订阅导入 https://github.com/SagerNet/sing-box/releases/tag/v1.14.2 这个新版本界面端使用，该版本只支持全ws的，不支持xhttp的
+    3.转换为clash的，支持：
+        ws: vless+ws[+tls]、trojan+ws+tls、vmess+ws+tls、shadowsocks+ws+tls
+        xhttp:  vless+xhttp+tls
+        注：导入 https://github.com/GUI-for-Cores/GUI.for.Clash/releases/tag/v1.27.0 使用异常，建议改用其它 clash.meta/mihomo 客户端使用
 
 —————————————————————————————————————————————————————————————————————————————————————————————————
 
@@ -155,24 +164,10 @@ ech_domain = "cloudflare-ech.com"
 ech_config_list = "cloudflare-ech.com+https://dns.alidns.com/dns-query"
 
 注意：
-1、支持添加ech值需要更换服务端的脚本代码吗？
-    答：不需要，如果脚本中，将websocket客户端传来的早期数据添加到读取流中(如下)，那么原服务端不用重新换代码部署，原来就是支持cf的Encrypted Client Hello(ECH)，当然最终还需自己添加测试。
-    const earlyDataHeader = request.headers.get('sec-websocket-protocol') || '';
-    const webSocketReadableStream = makeWebSocketReadableStream(webSocket, earlyDataHeader, log);
-2、目前，哪些协议支持生成的ech对应的链接？
-    答：只有vless/trojan+ws+tls。至于shadowsocks/vmess+ws+tls没有提供官方链接，只能手动一个个节点添加。
-    注意：目前不支持 xhttp 底层数据传输协议。
+1、支持添加ech值需要部署带ech的cf-worker的代码吗？
+    答：不需要。
+2、目前，哪些协议支持生成的ech对应的链接（仅v2ray）？
+    答：只有vless和trojan的ws与xhttp都可以自动添加ECH功能。至于shadowsocks和vmess的ws与xhttp没有提供官方链接格式，只能自动添加后，在代理软件中或json配置文件中，手动添加对应的ech值。
 3、添加对应的ech值是一直有效吗？
     答：不是永久有效的，如："AEX+DQBBCgAgACDisSCHN77Ah26T78buZIBUJ7ZUM8ZAqpom+EAnZiyzTQAEAAEAAQASY2xvdWRmbGFyZS1lY2guY29tAAA=" 这种格式，有效期很短，必须经常更新最新的；
-        "cloudflare-ech.com+https://dns.alidns.com/dns-query" 这种格式也会失效，只是它会在线自动获取，看起来是永远有效的，假如查询的域名或网络出问题，就会导致节点用不了。
-
-—————————————————————————————————————————————————————————————————————————————————————————————————
-
-温馨提示：
-
-    1、使用 Cloudflare workers 搭建的 vless/trojan/shadowsocks/vmess 节点，转换为 singbox/clash.mate/mihomo 订阅使用，PROXYIP 地址可能会丢失，跟没有设置 PROXYIP 效果一样，也就是不能使用它访问一些地区封锁的网站，比如：ChatGPT、Netflix 等。
-    2、shadowsocks+tls+websocket，订阅链接(v2ray) nekoray 和 v2rayN/v2rayNG 都支持了，如：
-        例如：ss://bm9uZTowMTk1YzQ3Ni02M2Y4LTcyMzItYWM0Mi0wYWMxZWFhYmU5MzQ=@104.19.177.137:2096?plugin=v2ray-plugin;tls;mux%3D0;mode%3Dwebsocket;path%3D/192.168.1.1-443;host%3Dss1.pages.dev#⑤|104.19.177.137:2096
-    3、config.toml中的random_ports无特殊要求就注释掉，不要添加上去，要不然，后面软件使用时，可能发现端口和tls冲突，导致连接不上，特别是使用ech的
-
-—————————————————————————————————————————————————————————————————————————————————————————————————
+        "cloudflare-ech.com+https://dns.alidns.com/dns-query" 这种格式也会失效，只是它会间隔一段时间在线自动获取，看起来是永远有效的，假如查询的域名或网络出问题包括频繁查询，导致没有获取到最新的，致使ECH节点用不了。
